@@ -230,119 +230,80 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return FullscreenPlayerProvider(
-      playerBuilder: () => _buildFullscreenPlayer(),
-      child: Material(
-        elevation: 0,
-        color: Colors.black,
-        child: InheritedYoutubePlayer(
-          controller: controller,
-          child: Container(
-            color: Colors.black,
-            width: widget.width ?? MediaQuery.of(context).size.width,
-            child: _buildPlayer(
-              errorWidget: Container(
-                color: Colors.black87,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 5.0),
-                        Expanded(
-                          child: Text(
-                            errorString(
-                              controller.value.errorCode,
-                              videoId: controller.metadata.videoId.isNotEmpty
-                                  ? controller.metadata.videoId
-                                  : controller.initialVideoId,
-                            ),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w300,
-                              fontSize: 15.0,
-                            ),
+    final isFullScreen = controller.value.isFullScreen;
+    final screenSize = MediaQuery.of(context).size;
+    
+    final playerContent = Material(
+      elevation: 0,
+      color: Colors.black,
+      child: InheritedYoutubePlayer(
+        controller: controller,
+        child: Container(
+          color: Colors.black,
+          width: isFullScreen ? screenSize.width : (widget.width ?? screenSize.width),
+          height: isFullScreen ? screenSize.height : null,
+          child: _buildPlayer(
+            errorWidget: Container(
+              color: Colors.black87,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 5.0),
+                      Expanded(
+                        child: Text(
+                          errorString(
+                            controller.value.errorCode,
+                            videoId: controller.metadata.videoId.isNotEmpty
+                                ? controller.metadata.videoId
+                                : controller.initialVideoId,
+                          ),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w300,
+                            fontSize: 15.0,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16.0),
-                    Text(
-                      'Error Code: ${controller.value.errorCode}',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w300,
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+                  Text(
+                    'Error Code: ${controller.value.errorCode}',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w300,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildFullscreenPlayer() {
-    return Material(
-      elevation: 0,
-      color: Colors.black,
-      child: InheritedYoutubePlayer(
-        controller: controller,
-        child: _buildPlayer(
-          errorWidget: Container(
-            color: Colors.black87,
-            padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 5.0),
-                    Expanded(
-                      child: Text(
-                        errorString(
-                          controller.value.errorCode,
-                          videoId: controller.metadata.videoId.isNotEmpty
-                              ? controller.metadata.videoId
-                              : controller.initialVideoId,
-                        ),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w300,
-                          fontSize: 15.0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16.0),
-                Text(
-                  'Error Code: ${controller.value.errorCode}',
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w300,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    
+    if (isFullScreen) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) {
+            controller.exitFullScreen();
+          }
+        },
+        child: playerContent,
+      );
+    }
+    
+    return playerContent;
   }
 
   Widget _buildPlayer({required Widget errorWidget}) {

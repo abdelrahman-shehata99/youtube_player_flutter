@@ -56,20 +56,6 @@ class _FullScreenButtonState extends State<FullScreenButton> {
     if (mounted) setState(() {});
   }
 
-  void _handleFullscreenToggle() {
-    if (_controller.value.isFullScreen) {
-      _controller.exitFullScreen();
-    } else {
-      final playerBuilder = _FullscreenPlayerBuilder.of(context);
-      if (playerBuilder != null) {
-        final player = playerBuilder.buildPlayer();
-        _controller.enterFullScreen(context, player);
-      } else {
-        _controller.toggleFullScreenMode();
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return IconButton(
@@ -79,44 +65,7 @@ class _FullScreenButtonState extends State<FullScreenButton> {
             : Icons.fullscreen,
         color: widget.color,
       ),
-      onPressed: _handleFullscreenToggle,
-    );
-  }
-}
-
-/// Provides a way to build the player widget for fullscreen mode.
-class _FullscreenPlayerBuilder extends InheritedWidget {
-  const _FullscreenPlayerBuilder({
-    required this.buildPlayer,
-    required super.child,
-  });
-
-  final Widget Function() buildPlayer;
-
-  static _FullscreenPlayerBuilder? of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<_FullscreenPlayerBuilder>();
-  }
-
-  @override
-  bool updateShouldNotify(_FullscreenPlayerBuilder oldWidget) => false;
-}
-
-/// Wrap your YoutubePlayer with this widget to enable proper fullscreen support.
-class FullscreenPlayerProvider extends StatelessWidget {
-  const FullscreenPlayerProvider({
-    super.key,
-    required this.child,
-    required this.playerBuilder,
-  });
-
-  final Widget child;
-  final Widget Function() playerBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    return _FullscreenPlayerBuilder(
-      buildPlayer: playerBuilder,
-      child: child,
+      onPressed: () => _controller.toggleFullScreenMode(),
     );
   }
 }

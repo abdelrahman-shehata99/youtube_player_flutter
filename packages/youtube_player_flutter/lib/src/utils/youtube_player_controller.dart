@@ -14,8 +14,6 @@ import '../utils/youtube_meta_data.dart';
 import '../widgets/progress_bar.dart';
 import 'youtube_player_flags.dart';
 
-NavigatorState? _fullscreenNavigator;
-
 /// [ValueNotifier] for [YoutubePlayerController].
 class YoutubePlayerValue {
   /// The duration, current position, buffering state, error state and settings
@@ -277,47 +275,20 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
   void setPlaybackRate(double rate) => _callMethod('setPlaybackRate($rate)');
 
   /// Toggles the player's full screen mode.
-  /// 
-  /// When entering fullscreen, this method requires a [BuildContext] to push 
-  /// a fullscreen route. Use [enterFullScreen] with context for proper fullscreen behavior,
-  /// or use this method only for exiting fullscreen.
   void toggleFullScreenMode() {
     if (value.isFullScreen) {
       exitFullScreen();
+    } else {
+      enterFullScreen();
     }
   }
 
-  /// Enters fullscreen mode using an overlay.
-  /// 
-  /// [context] is required to insert the fullscreen overlay.
-  /// [playerWidget] is the actual player widget to reparent into fullscreen.
-  void enterFullScreen(BuildContext context, Widget playerWidget) {
+  /// Enters fullscreen mode.
+  void enterFullScreen() {
     if (value.isFullScreen) return;
     
     updateValue(value.copyWith(isFullScreen: true));
-    
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    
-    _fullscreenNavigator = Navigator.of(context, rootNavigator: true);
-    
-    _fullscreenNavigator!.push(
-      PageRouteBuilder(
-        opaque: true,
-        pageBuilder: (ctx, animation, secondaryAnimation) {
-          return _FullscreenPlayerPage(
-            controller: this,
-            player: playerWidget,
-          );
-        },
-        transitionsBuilder: (ctx, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-      ),
-    );
   }
 
   /// Exits fullscreen mode.
@@ -325,14 +296,7 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
     if (!value.isFullScreen) return;
     
     updateValue(value.copyWith(isFullScreen: false));
-    
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    
-    if (_fullscreenNavigator != null && _fullscreenNavigator!.canPop()) {
-      _fullscreenNavigator!.pop();
-      _fullscreenNavigator = null;
-    }
   }
 
   /// MetaData for the currently loaded or cued video.
@@ -383,50 +347,5 @@ class InheritedYoutubePlayer extends InheritedWidget {
   @override
   bool updateShouldNotify(InheritedYoutubePlayer oldWidget) {
     return oldWidget.controller.hashCode != controller.hashCode;
-  }
-}
-
-class _FullscreenPlayerPage extends StatefulWidget {
-  const _FullscreenPlayerPage({
-    required this.controller,
-    required this.player,
-  });
-
-  final YoutubePlayerController controller;
-  final Widget player;
-
-  @override
-  State<_FullscreenPlayerPage> createState() => _FullscreenPlayerPageState();
-}
-
-class _FullscreenPlayerPageState extends State<_FullscreenPlayerPage> {
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isLandscape = size.width > size.height;
-    
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          widget.controller.exitFullScreen();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: isLandscape
-              ? SizedBox(
-                  width: size.width,
-                  height: size.height,
-                  child: widget.player,
-                )
-              : AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: widget.player,
-                ),
-        ),
-      ),
-    );
   }
 }
